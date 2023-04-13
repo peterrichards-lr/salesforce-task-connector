@@ -1,0 +1,6 @@
+Bundle-Name: Liferay Sales Engineering Task Connector Api
+Bundle-SymbolicName: com.liferay.sales.engineering.task.connector
+Bundle-Version: 1.0.0
+Export-Package: \
+    com.liferay.sales.engineering.task.connector.api, \
+    com.liferay.sales.engineering.task.connector.configuration
