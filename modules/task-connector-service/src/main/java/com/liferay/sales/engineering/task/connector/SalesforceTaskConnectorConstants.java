@@ -1,5 +1,7 @@
 package com.liferay.sales.engineering.task.connector;
 
+import com.liferay.portal.kernel.workflow.WorkflowConstants;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -9,10 +11,10 @@ import java.util.Map;
 public final class SalesforceTaskConnectorConstants {
     public static final String AUTH_HEADER_KEY = "Authorization";
     public static final String AUTH_HEADER_VALUE_PREFIX = "Bearer ";
-    public static final int DEFAULT_INTEGER_PROPERTY_RADIX = 10;
-    public static final String DEFAULT_LANGUAGE_ID = "en_US";
     public static final String DEFAULT_PAGE_SIZE = "10";
+    public static final int DEFAULT_PROPERTY_RADIX = 10;
     public static final String DEFAULT_START_PAGE = "1";
+    public static final String DEFAULT_WORKFLOW_STATUS = WorkflowConstants.LABEL_APPROVED;
     public static final Map<String, String> FIELD_MAPPING = new HashMap<>() {
         {
             put(SALESFORCE_FIELDS.TASK_DESCRIPTION.fieldName, OBJECT_FIELDS.TASK_DESCRIPTION.fieldName);
@@ -21,6 +23,7 @@ public final class SalesforceTaskConnectorConstants {
         }
     };
     public static final String LANGUAGE_ID_PROPERTY_KEY = "language-id";
+    public static final String OBJECT_EXTERNAL_REFERENCE_CODE_PROPERTY_KEY = "liferay-object-external-reference-code";
     public static final String PAGE_SIZE_PROPERTY_KEY = "page-size";
     public static final String SF_ACCESS_TOKEN = "access_token";
     public static final String SF_API_VERSION = "v57.0";
@@ -37,6 +40,8 @@ public final class SalesforceTaskConnectorConstants {
     public static final String SF_QUERY_PATH = SF_DATA_PATH + "/" + SF_API_VERSION + "/query";
     public static final String SF_USERNAME_KEY = "username";
     public static final String START_PAGE_PROPERTY_KEY = "start-page";
+    public static final String USER_ID_PROPERTY_KEY = "user-id";
+    public static final String WORKFLOW_STATUS_PROPERTY_KEY = "workflow-status";
 
     public enum OBJECT_FIELDS {
         TASK_DESCRIPTION("description"),
@@ -45,7 +50,7 @@ public final class SalesforceTaskConnectorConstants {
 
         public final String fieldName;
 
-        private OBJECT_FIELDS(String fieldName) {
+        OBJECT_FIELDS(String fieldName) {
             this.fieldName = fieldName;
         }
     }
@@ -66,7 +71,7 @@ public final class SalesforceTaskConnectorConstants {
 
         public final String fieldName;
 
-        private SALESFORCE_FIELDS(String fieldName) {
+        SALESFORCE_FIELDS(String fieldName) {
             this.fieldName = fieldName;
         }
     }

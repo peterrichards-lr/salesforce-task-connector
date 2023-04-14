@@ -43,14 +43,14 @@ public class TaskConnectorDispatchTaskExecutor extends BaseDispatchTaskExecutor 
 
             dispatchTaskExecutorOutput.setOutput(
                     StringBundler.concat(
-                            "Ran the task synchronisation at ",
+                            "Ran the Task synchronisation at ",
                             new Date()));
         } catch (RuntimeException exception) {
             if (_log.isDebugEnabled()) {
                 _log.debug(exception);
             }
-            dispatchTaskExecutorOutput.setError("Failed to run Task synchronisation");
-            throw new Exception("Failed to run Task synchronisation", exception);
+            dispatchTaskExecutorOutput.setError(exception.getCause().getMessage());
+            throw new Exception("Failed to synchronise Tasks", exception);
         }
     }
 
