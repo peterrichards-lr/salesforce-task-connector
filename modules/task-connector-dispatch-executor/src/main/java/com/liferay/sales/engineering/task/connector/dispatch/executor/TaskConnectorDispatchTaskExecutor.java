@@ -39,7 +39,7 @@ public class TaskConnectorDispatchTaskExecutor extends BaseDispatchTaskExecutor 
                 dispatchTrigger.getDispatchTaskSettingsUnicodeProperties();
 
         try {
-            taskConnector.synchronise(dispatchTrigger.getCompanyId());
+            taskConnector.synchronise(dispatchTrigger.getCompanyId(), dispatchTaskSettingsUnicodeProperties);
 
             dispatchTaskExecutorOutput.setOutput(
                     StringBundler.concat(
@@ -49,8 +49,8 @@ public class TaskConnectorDispatchTaskExecutor extends BaseDispatchTaskExecutor 
             if (_log.isDebugEnabled()) {
                 _log.debug(exception);
             }
-            dispatchTaskExecutorOutput.setError("Failed to run task synchronisation");
-            throw exception;
+            dispatchTaskExecutorOutput.setError("Failed to run Task synchronisation");
+            throw new Exception("Failed to run Task synchronisation", exception);
         }
     }
 

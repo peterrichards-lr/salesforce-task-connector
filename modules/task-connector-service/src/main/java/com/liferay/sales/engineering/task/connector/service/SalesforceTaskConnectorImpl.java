@@ -40,7 +40,6 @@ import org.osgi.service.component.annotations.Reference;
 
 import java.io.IOException;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -96,7 +95,6 @@ public class SalesforceTaskConnectorImpl implements TaskConnector {
                                     "Response code ", response.getStatusLine().getStatusCode(), ": ",
                                     responseJSON));
                 }
-
                 return null;
             }
 
@@ -111,12 +109,9 @@ public class SalesforceTaskConnectorImpl implements TaskConnector {
 
     private TaskConnectorConfiguration _getConfiguration(
             long companyId) {
-
         try {
-
             return ConfigurationProviderUtil.getCompanyConfiguration(
                     TaskConnectorConfiguration.class, companyId);
-
         } catch (ConfigurationException configurationException) {
             return ReflectionUtil.throwException(configurationException);
         }
@@ -128,13 +123,11 @@ public class SalesforceTaskConnectorImpl implements TaskConnector {
 
     private ObjectField _getObjectFieldByName(
             String name, List<ObjectField> objectFields) {
-
         for (ObjectField objectField : objectFields) {
             if (Objects.equals(name, objectField.getName())) {
                 return objectField;
             }
         }
-
         return null;
     }
 
@@ -144,7 +137,7 @@ public class SalesforceTaskConnectorImpl implements TaskConnector {
                 pagination.getStartPosition());
     }
 
-    private Page<ObjectEntry> _getTasks(final CloseableHttpClient httpClient, final String instanceUrl, final String accessToken, final long companyId, final Pagination pagination) throws URISyntaxException {
+    private Page<ObjectEntry> _getTasks(final CloseableHttpClient httpClient, final String instanceUrl, final String accessToken, final long companyId, final Pagination pagination, final String languageId) throws Exception {
         final String tasksEndpoint = instanceUrl + SF_QUERY_PATH;
 
         final HttpGet request = new HttpGet(tasksEndpoint);
@@ -156,8 +149,8 @@ public class SalesforceTaskConnectorImpl implements TaskConnector {
         final String query = StringBundler.concat("SELECT FIELDS(ALL) FROM ",
                 SF_OBJECT_NAME, _getSalesforcePagination(pagination));
 
-        if (_log.isDebugEnabled()) {
-            _log.debug(StringBundler.concat("_getTasks : ", query));
+        if (_log.isTraceEnabled()) {
+            _log.trace(StringBundler.concat("_getTasks query : ", query));
         }
 
         nameValuePairs.add(new BasicNameValuePair(SF_QUERY_KEY, query));
@@ -177,7 +170,6 @@ public class SalesforceTaskConnectorImpl implements TaskConnector {
                                     "Response code ", response.getStatusLine().getStatusCode(), ": ",
                                     responseJSON));
                 }
-
                 return null;
             }
 
@@ -196,18 +188,14 @@ public class SalesforceTaskConnectorImpl implements TaskConnector {
             final JSONArray tasks = queryResponse.getJSONArray(SALESFORCE_FIELDS.RECORDS.fieldName);
 
             return Page.of(
-                    _toObjectEntries(companyId, tasks),
+                    _toObjectEntries(companyId, languageId, tasks),
                     pagination,
                     _getTotalCount(httpClient, instanceUrl, accessToken));
-
-        } catch (Exception e) {
-            throw new RuntimeException(e);
         }
     }
 
-    private int _getTotalCount(final CloseableHttpClient httpClient, final String instanceUrl, final String accessToken) throws IOException, URISyntaxException {
+    private int _getTotalCount(final CloseableHttpClient httpClient, final String instanceUrl, final String accessToken) throws Exception {
         final String tasksEndpoint = instanceUrl + SF_QUERY_PATH;
-
         final HttpGet request = new HttpGet(tasksEndpoint);
 
         request.setHeader(AUTH_HEADER_KEY, AUTH_HEADER_VALUE_PREFIX + accessToken);
@@ -217,8 +205,8 @@ public class SalesforceTaskConnectorImpl implements TaskConnector {
         final String query = StringBundler.concat("SELECT COUNT(Id) FROM ",
                 SF_OBJECT_NAME);
 
-        if (_log.isDebugEnabled()) {
-            _log.debug(StringBundler.concat("_getTotalCount : ", query));
+        if (_log.isTraceEnabled()) {
+            _log.trace(StringBundler.concat("_getTotalCount query : ", query));
         }
 
         nameValuePairs.add(new BasicNameValuePair(SF_QUERY_KEY, query));
@@ -244,29 +232,27 @@ public class SalesforceTaskConnectorImpl implements TaskConnector {
 
             final JSONObject queryResponse = _jsonFactory.createJSONObject(responseJSON);
 
-            JSONArray jsonArray = queryResponse.getJSONArray("records");
+            JSONArray jsonArray = queryResponse.getJSONArray(SALESFORCE_FIELDS.RECORDS.fieldName);
 
             return jsonArray.getJSONObject(
                     0
             ).getInt(
-                    "expr0"
+                    SALESFORCE_FIELDS.FIRST_EXPRESSION.fieldName
             );
-        } catch (JSONException e) {
-            throw new RuntimeException(e);
         }
     }
 
     private Collection<ObjectEntry> _toObjectEntries(
-            long companyId,
+            long companyId, String languageId,
             JSONArray jsonArray) throws Exception {
 
         return JSONUtil.toList(
                 jsonArray,
                 jsonObject -> _toObjectEntry(
-                        companyId, jsonObject));
+                        companyId, languageId, jsonObject));
     }
 
-    private ObjectEntry _toObjectEntry(long companyId, JSONObject jsonObject) throws ParseException {
+    private ObjectEntry _toObjectEntry(long companyId, String languageId, JSONObject jsonObject) throws ParseException {
         DateFormat dateTimeFormat = _getDateTimeFormat();
 
         ObjectDefinition objectDefinition = _objectDefinitionLocalService.fetchObjectDefinitionByExternalReferenceCode("c0679ecb-5900-f3e1-4899-d098eed9ae74", companyId);
@@ -332,7 +318,7 @@ public class SalesforceTaskConnectorImpl implements TaskConnector {
                     {
                         key = listTypeEntry.getKey();
                         name = listTypeEntry.getName(
-                                "en_US");
+                                languageId);
                     }
                 };
             } else {
@@ -343,44 +329,52 @@ public class SalesforceTaskConnectorImpl implements TaskConnector {
                 }
                 continue;
             }
-
             properties.put(objectField.getName(), value);
         }
-
         return objectEntry;
     }
 
     @Override
-    public void synchronise(long companyId) {
-        final TaskConnectorConfiguration configuration = _getConfiguration(companyId);
-        try (final CloseableHttpClient httpClient = HttpClients.createDefault()) {
-            final JSONObject authResponse = _authenticate(httpClient, configuration);
-            if (authResponse == null) {
-                throw new RuntimeException("Unable to authenticate to obtain access token. Check configuration");
-            }
+    public void synchronise(long companyId, Map<String, String> properties) {
+        try {
+            final TaskConnectorConfiguration configuration = _getConfiguration(companyId);
 
-            final String instanceUrl = authResponse.getString(SF_INSTANCE_URL);
-            final String accessToken = authResponse.getString(SF_ACCESS_TOKEN);
+            final String languageId = properties.getOrDefault(LANGUAGE_ID_PROPERTY_KEY, DEFAULT_LANGUAGE_ID);
+            final int startPage = Integer.parseInt(properties.getOrDefault(START_PAGE_PROPERTY_KEY, DEFAULT_START_PAGE), DEFAULT_INTEGER_PROPERTY_RADIX);
+            final int pageSize = Integer.parseInt(properties.getOrDefault(PAGE_SIZE_PROPERTY_KEY, DEFAULT_PAGE_SIZE), DEFAULT_INTEGER_PROPERTY_RADIX);
 
-            final int totalCount = _getTotalCount(httpClient, instanceUrl, accessToken);
-            if (_log.isDebugEnabled()) {
-                _log.debug(StringBundler.concat("Total count : ", totalCount));
-            }
+            try (final CloseableHttpClient httpClient = HttpClients.createDefault()) {
+                final JSONObject authResponse = _authenticate(httpClient, configuration);
+                if (authResponse == null) {
+                    throw new RuntimeException("Unable to authenticate to obtain access token. Check configuration");
+                }
 
-            Pagination pagination = Pagination.of(1, 10);
+                final String instanceUrl = authResponse.getString(SF_INSTANCE_URL);
+                final String accessToken = authResponse.getString(SF_ACCESS_TOKEN);
 
-            final Page<ObjectEntry> objectEntries = _getTasks(httpClient, instanceUrl, accessToken, companyId, pagination);
-
-            if (objectEntries == null)
-                return;
-
-            for (ObjectEntry objectEntry : objectEntries.getItems()) {
+                final int totalCount = _getTotalCount(httpClient, instanceUrl, accessToken);
                 if (_log.isDebugEnabled()) {
-                    _log.debug(objectEntry);
+                    _log.debug(StringBundler.concat("Total count : ", totalCount));
+                }
+
+                final int lastPage = (int)Math.ceil((float)(totalCount / pageSize)) + 1; // pages start at 1
+                for (int currentPage = startPage; currentPage <= lastPage; currentPage++) {
+                    Pagination pagination = Pagination.of(currentPage, pageSize);
+                    Page<ObjectEntry> objectEntries = _getTasks(httpClient, instanceUrl, accessToken, companyId, pagination, languageId);
+
+                    if (objectEntries == null)
+                        continue;
+
+                    for (ObjectEntry objectEntry : objectEntries.getItems()) {
+                        if (_log.isDebugEnabled()) {
+                            _log.debug(StringBundler.concat("Page : ", currentPage, " Record : ",
+                                    objectEntry));
+                        }
+                    }
                 }
             }
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+        } catch (Exception exception) {
+            throw new RuntimeException("Unable to synchronise Task. See inner exception", exception);
         }
     }
 }

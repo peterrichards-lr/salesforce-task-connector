@@ -9,6 +9,10 @@ import java.util.Map;
 public final class SalesforceTaskConnectorConstants {
     public static final String AUTH_HEADER_KEY = "Authorization";
     public static final String AUTH_HEADER_VALUE_PREFIX = "Bearer ";
+    public static final int DEFAULT_INTEGER_PROPERTY_RADIX = 10;
+    public static final String DEFAULT_LANGUAGE_ID = "en_US";
+    public static final String DEFAULT_PAGE_SIZE = "10";
+    public static final String DEFAULT_START_PAGE = "1";
     public static final Map<String, String> FIELD_MAPPING = new HashMap<>() {
         {
             put(SALESFORCE_FIELDS.TASK_DESCRIPTION.fieldName, OBJECT_FIELDS.TASK_DESCRIPTION.fieldName);
@@ -16,6 +20,8 @@ public final class SalesforceTaskConnectorConstants {
             put(SALESFORCE_FIELDS.TASK_STATUS.fieldName, OBJECT_FIELDS.TASK_STATUS.fieldName);
         }
     };
+    public static final String LANGUAGE_ID_PROPERTY_KEY = "language-id";
+    public static final String PAGE_SIZE_PROPERTY_KEY = "page-size";
     public static final String SF_ACCESS_TOKEN = "access_token";
     public static final String SF_API_VERSION = "v57.0";
     public static final String SF_AUTH_PATH = "/services/oauth2/token";
@@ -30,6 +36,7 @@ public final class SalesforceTaskConnectorConstants {
     public static final String SF_QUERY_KEY = "q";
     public static final String SF_QUERY_PATH = SF_DATA_PATH + "/" + SF_API_VERSION + "/query";
     public static final String SF_USERNAME_KEY = "username";
+    public static final String START_PAGE_PROPERTY_KEY = "start-page";
 
     public enum OBJECT_FIELDS {
         TASK_DESCRIPTION("description"),
@@ -54,7 +61,8 @@ public final class SalesforceTaskConnectorConstants {
         CREATED("CreatedDate"),
         LAST_MODIFIED("LastModifiedDate"),
         TOTAL_SIZE("totalSize"),
-        RECORDS("records");
+        RECORDS("records"),
+        FIRST_EXPRESSION("expr0");
 
         public final String fieldName;
 
