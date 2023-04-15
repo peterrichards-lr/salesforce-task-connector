@@ -454,15 +454,6 @@ public class SalesforceTaskConnectorImpl implements TaskConnector {
                 _objectFieldLocalService.getObjectFields(
                         objectDefinition.getObjectDefinitionId())) {
 
-            if (Objects.equals(
-                    objectField.getName(), "status")) {
-                values.put(
-                        objectField.getName(),
-                        objectEntry.getStatus());
-
-                continue;
-            }
-
             Object value = getValue(
                     objectField, userId,
                     objectEntry.getProperties());
@@ -613,21 +604,29 @@ public class SalesforceTaskConnectorImpl implements TaskConnector {
                 final String accessToken = authResponse.getString(SF_ACCESS_TOKEN);
 
                 final int totalCount = _getTotalCount(httpClient, instanceUrl, accessToken);
-                if (_log.isDebugEnabled()) {
-                    _log.debug(StringBundler.concat("Total count : ", totalCount));
+                if (_log.isInfoEnabled()) {
+                    _log.info(StringBundler.concat("Synchronising ", totalCount, " tasks. Page size : ", pageSize));
                 }
 
                 final int lastPage = (int) Math.ceil((float) (totalCount / pageSize)) + startPage; // pages start at 1
+                final int totalPages = lastPage - startPage + 1;
+
                 for (int currentPage = startPage; currentPage <= lastPage; currentPage++) {
+                    final int pageNumber = currentPage - startPage + 1;
                     final Pagination pagination = Pagination.of(currentPage, pageSize);
                     final Page<ObjectEntry> objectEntries = _getTasks(httpClient, instanceUrl, accessToken, companyId, pagination, languageId, objectDefinition, workflowStatus);
 
                     if (objectEntries == null)
                         continue;
 
+                    if (_log.isInfoEnabled()) {
+                        _log.info(StringBundler.concat("Synchronising page ", pageNumber, " of ",
+                                totalPages));
+                    }
+
                     for (ObjectEntry objectEntry : objectEntries.getItems()) {
-                        if (_log.isDebugEnabled()) {
-                            _log.debug(StringBundler.concat("Page : ", currentPage, " Record : ",
+                        if (_log.isTraceEnabled()) {
+                            _log.trace(StringBundler.concat("Page : ", currentPage, " Record : ",
                                     objectEntry));
                         }
 
@@ -638,7 +637,7 @@ public class SalesforceTaskConnectorImpl implements TaskConnector {
                                 objectEntry,
                                 locale);
 
-                        com.liferay.object.model.ObjectEntry temp = ObjectEntryLocalServiceUtil.addOrUpdateObjectEntry(
+                        com.liferay.object.model.ObjectEntry newObjectEntry = ObjectEntryLocalServiceUtil.addOrUpdateObjectEntry(
                                 objectEntry.getExternalReferenceCode(),
                                 userId, groupId, objectDefinition.getObjectDefinitionId(),
                                 objectValues,
@@ -646,7 +645,7 @@ public class SalesforceTaskConnectorImpl implements TaskConnector {
 
                         ObjectEntryLocalServiceUtil.updateStatus(
                                 userId,
-                                temp.getObjectEntryId(),
+                                newObjectEntry.getObjectEntryId(),
                                 objectEntry.getStatus().getCode(),
                                 _getServiceContext());
                     }

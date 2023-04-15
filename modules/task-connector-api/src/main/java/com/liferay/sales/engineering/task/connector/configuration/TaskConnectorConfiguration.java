@@ -24,7 +24,7 @@ public interface TaskConnectorConfiguration {
 	@Meta.AD(name = "task-connector-configuration-sf-consumer-key-name", description = "task-connector-configuration-sf-consumer-key-description", required = false)
 	String consumerKey();
 
-	@Meta.AD(name = "task-connector-configuration-sf-consumer-secret-name", description = "task-connector-configuration-sf-consumer-secret-description", required = false)
+	@Meta.AD(name = "task-connector-configuration-sf-consumer-secret-name", description = "task-connector-configuration-sf-consumer-secret-description", required = false, type = Meta.Type.Password)
 	String consumerSecret();
 
 	@Meta.AD(name = "task-connector-configuration-sf-username-name", description = "task-connector-configuration-sf-username-description", required = false)
