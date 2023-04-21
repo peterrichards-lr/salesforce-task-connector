@@ -66,6 +66,10 @@ import static com.liferay.sales.engineering.task.connector.SalesforceTaskConnect
 
 /**
  * @author peterrichards
+ *
+ * This is based on the Salesforce Proxy found here
+ * https://github.com/liferay/liferay-portal/blob/master/modules/apps/object/object-storage-salesforce/src/main/java/com/liferay/object/storage/salesforce/internal/rest/manager/v1_0/SalesforceObjectEntryManagerImpl.java
+ *
  */
 @Component(
         configurationPid = TaskConnectorConfiguration.PID,
@@ -382,7 +386,7 @@ public class SalesforceTaskConnectorImpl implements TaskConnector {
                 ).build();
                 id = 0L;
                 creator = CreatorUtil.toCreator(
-                        _portal, Optional.empty(),
+                        _portal, null,
                         _userLocalService.fetchUserByExternalReferenceCode(
                                 jsonObject.getString(SALESFORCE_FIELDS.USER.fieldName), companyId));
                 dateCreated = dateTimeFormat.parse(

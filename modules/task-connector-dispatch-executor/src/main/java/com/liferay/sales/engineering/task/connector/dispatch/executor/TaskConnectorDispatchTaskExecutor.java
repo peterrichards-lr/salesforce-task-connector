@@ -21,6 +21,10 @@ import java.util.ResourceBundle;
 
 /**
  * @author peterrichards
+ *
+ * This is based on the com.liferay.dispatch.executor.sample.internal.SampleDispatchTaskExecutor example
+ * found here https://github.com/liferay/liferay-portal/blob/master/modules/apps/dispatch/dispatch-executor-sample/src/main/java/com/liferay/dispatch/executor/sample/internal/SampleDispatchTaskExecutor.java
+ *
  */
 @Component(
         property = {
