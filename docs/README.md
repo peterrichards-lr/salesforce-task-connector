@@ -25,6 +25,14 @@ These extensions have been tested with 7.4 U71.
 
 ## Liferay Object Definition
 
+When importing the Object definition it is important to review the Pick List definition for the Task Status as it may
+have lost its values. For the connector to work, the External Reference Codes for each row must reflect the Salesforce
+API Name for its version of the object field.
+
+![Liferay Pick List Definition](images/liferay-pick-list-definition.png)
+
+![Salesforce Field API Name](images/sf-pick-list-api-name.png)
+
 [Task Object definition](/modules/task-connector-service/Object-Task.json)
 
 ## Configuration

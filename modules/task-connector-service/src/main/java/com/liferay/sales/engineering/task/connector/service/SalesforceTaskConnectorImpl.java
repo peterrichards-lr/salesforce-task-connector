@@ -500,14 +500,14 @@ public class SalesforceTaskConnectorImpl implements TaskConnector {
             } else if (objectField.getListTypeDefinitionId() != 0) {
                 ListEntry listEntry = (ListEntry) value;
                 if (listEntry == null) {
-                    final String errorMessage = "The list entry is null";
+                    final String errorMessage = StringBundler.concat("The list entry is null. Object field", objectField.getName());
                     if (_log.isDebugEnabled()) {
                         _log.debug(errorMessage);
                     }
                     throw new Exception(errorMessage);
                 }
                 if (listEntry.getKey() == null) {
-                    final String errorMessage = StringBundler.concat("The list entry key for ", value, " is null");
+                    final String errorMessage = StringBundler.concat("The list entry key for ", value, " is null. Object field", objectField.getName());
                     if (_log.isDebugEnabled()) {
                         _log.debug(errorMessage);
                     }
